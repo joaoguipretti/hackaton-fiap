@@ -1,0 +1,15 @@
+# Build
+bin/
+obj/
+
+# Firebase credentials
+firebase-sa.json
+**/firebase-sa.json
+
+# User-specific
+*.user
+.vs/
+
+# Environment
+.env
+appsettings.Development.json
