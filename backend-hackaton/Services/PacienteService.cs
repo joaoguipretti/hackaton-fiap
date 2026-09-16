@@ -14,7 +14,13 @@ public class PacienteService(FirestoreDb db) : IPacienteService
         {
             Cpf = request.Cpf,
             NomeCompleto = request.NomeCompleto,
-            Endereco = request.Endereco,
+            Endereco = request.Endereco ?? string.Empty,
+            CartaoSus = request.CartaoSus,
+            Idade = request.Idade,
+            Genero = request.Genero,
+            Alergias = request.Alergias,
+            CondicoesPrevias = request.CondicoesPrevias,
+            MedicamentosUso = request.MedicamentosUso,
             CriadoEm = DateTime.UtcNow
         };
 
@@ -38,5 +44,15 @@ public class PacienteService(FirestoreDb db) : IPacienteService
     }
 
     private static PacienteResponse ToResponse(Paciente p) =>
-        new(p.Cpf, p.NomeCompleto, p.Endereco, p.CriadoEm);
+        new(
+            p.Cpf,
+            p.NomeCompleto,
+            p.Endereco,
+            p.CartaoSus,
+            p.Idade,
+            p.Genero,
+            p.Alergias,
+            p.CondicoesPrevias,
+            p.MedicamentosUso,
+            p.CriadoEm);
 }

@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+:root {
+  font-family: 'Avenir Next', 'Trebuchet MS', sans-serif;
+  color: #17313b;
+  background: #f2f7f5;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+#root {
+  min-height: 100svh;
+}
