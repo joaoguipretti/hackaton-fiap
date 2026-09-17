@@ -7,13 +7,24 @@ namespace Anaminese.API.Services;
 public class ConsultaService(FirestoreDb db) : IConsultaService
 {
     private const string Colecao = "consultas";
+    private const string PacientesCollection = "pacientes";
 
     public async Task<ConsultaResponse> CriarAsync(CriarConsultaRequest request)
     {
+        // Herda o ConsultorioId do paciente (se ele já existir cadastrado)
+        var consultorioId = string.Empty;
+        var pacienteDoc = await db.Collection(PacientesCollection).Document(request.PacienteCpf).GetSnapshotAsync();
+        if (pacienteDoc.Exists)
+        {
+            var p = pacienteDoc.ConvertTo<Paciente>();
+            consultorioId = p.ConsultorioId ?? string.Empty;
+        }
+
         var consulta = new Consulta
         {
             Id = Guid.NewGuid().ToString(),
             PacienteCpf = request.PacienteCpf,
+            ConsultorioId = consultorioId,
             DataConsulta = DateTime.UtcNow,
             Severidade = request.Severidade.ToString(),
             Observacoes = request.Observacoes,
@@ -40,18 +51,19 @@ public class ConsultaService(FirestoreDb db) : IConsultaService
 
     public async Task<IEnumerable<ConsultaResponse>> ListarPorPacienteAsync(string cpf)
     {
-        var query = db.Collection(Colecao)
-            .WhereEqualTo("PacienteCpf", cpf)
-            .OrderByDescending("DataConsulta");
-
+        // Sem OrderBy no Firestore pra evitar índice composto (WhereEqualTo + OrderBy).
+        // Ordenamos em memória — MVP tem volume pequeno.
+        var query = db.Collection(Colecao).WhereEqualTo("PacienteCpf", cpf);
         var snapshot = await query.GetSnapshotAsync();
 
-        return snapshot.Documents.Select(doc =>
-        {
-            var consulta = doc.ConvertTo<Consulta>();
-            consulta.Id = doc.Id;
-            return ToResponse(consulta);
-        });
+        return snapshot.Documents
+            .Select(doc =>
+            {
+                var consulta = doc.ConvertTo<Consulta>();
+                consulta.Id = doc.Id;
+                return ToResponse(consulta);
+            })
+            .OrderByDescending(c => c.DataConsulta);
     }
 
     public async Task<IEnumerable<ConsultaResponse>> ListarTodasAsync(int limite = 50)
@@ -70,6 +82,23 @@ public class ConsultaService(FirestoreDb db) : IConsultaService
         });
     }
 
+    public async Task<IEnumerable<ConsultaResponse>> ListarPorConsultorioAsync(string consultorioId, int limite = 50)
+    {
+        // Sem OrderBy/Limit no Firestore pra evitar índice composto — ordena/limita em memória.
+        var query = db.Collection(Colecao).WhereEqualTo("ConsultorioId", consultorioId);
+        var snapshot = await query.GetSnapshotAsync();
+
+        return snapshot.Documents
+            .Select(doc =>
+            {
+                var consulta = doc.ConvertTo<Consulta>();
+                consulta.Id = doc.Id;
+                return ToResponse(consulta);
+            })
+            .OrderByDescending(c => c.DataConsulta)
+            .Take(limite);
+    }
+
     private static ConsultaResponse ToResponse(Consulta c) =>
-        new(c.Id, c.PacienteCpf, c.DataConsulta, c.Severidade, c.Observacoes, c.CriadoEm);
+        new(c.Id, c.PacienteCpf, c.ConsultorioId, c.DataConsulta, c.Severidade, c.Observacoes, c.CriadoEm);
 }

@@ -12,6 +12,9 @@ public class Consulta
     public string PacienteCpf { get; set; } = string.Empty;
 
     [FirestoreProperty]
+    public string ConsultorioId { get; set; } = string.Empty;
+
+    [FirestoreProperty]
     public DateTime DataConsulta { get; set; } = DateTime.UtcNow;
 
     [FirestoreProperty]

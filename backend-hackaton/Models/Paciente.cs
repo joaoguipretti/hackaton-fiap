@@ -33,5 +33,8 @@ public class Paciente
     public string? MedicamentosUso { get; set; }
 
     [FirestoreProperty]
+    public string ConsultorioId { get; set; } = string.Empty;
+
+    [FirestoreProperty]
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 }

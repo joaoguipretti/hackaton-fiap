@@ -1,46 +1,111 @@
 @host = http://localhost:5101
+@token = <cole aqui o token retornado pelo /auth/login>
 
-### ─── Pacientes ────────────────────────────────────────────────
+### ─── Consultórios ────────────────────────────────────────────────
 
-### Cadastrar paciente
+### Criar consultório (público)
+POST {{host}}/consultorios
+Content-Type: application/json
+
+{
+  "nome": "Clínica FIAP - Unidade Paulista",
+  "endereco": "Av. Paulista, 1000 - São Paulo/SP"
+}
+
+### Listar consultórios
+GET {{host}}/consultorios
+Accept: application/json
+
+### Buscar por ID (substitua {consultorioId} pelo retorno acima)
+GET {{host}}/consultorios/{consultorioId}
+
+
+### ─── Auth ────────────────────────────────────────────────────────
+
+### Register RECEPCIONISTA (associa a um consultório existente)
+POST {{host}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "recepcao@fiap.com.br",
+  "senha": "senha123",
+  "tipo": 1,
+  "consultorioId": "<id do consultorio>"
+}
+
+### Register PACIENTE (cria Paciente + Usuário no mesmo consultório)
+POST {{host}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "joao@paciente.com",
+  "senha": "senha123",
+  "tipo": 0,
+  "consultorioId": "<id do consultorio>",
+  "cpf": "12345678900",
+  "nomeCompleto": "João da Silva",
+  "endereco": "Rua X, 100",
+  "idade": 35,
+  "genero": "M"
+}
+
+### Login (retorna JWT)
+POST {{host}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "recepcao@fiap.com.br",
+  "senha": "senha123"
+}
+
+### Dados do usuário logado
+GET {{host}}/auth/me
+Authorization: Bearer {{token}}
+
+
+### ─── Pacientes ───────────────────────────────────────────────────
+
+### Cadastrar paciente sem usuário (público - usado pelo chat/agent)
 POST {{host}}/pacientes
 Content-Type: application/json
 
 {
-  "cpf": "12345678900",
-  "nomeCompleto": "João da Silva",
-  "endereco": "Rua das Flores, 123 - São Paulo/SP"
+  "cpf": "99988877766",
+  "nomeCompleto": "Maria da Silva",
+  "endereco": "Rua Y, 200",
+  "idade": 45,
+  "genero": "F"
 }
 
-### Buscar paciente por CPF
-GET {{host}}/pacientes/12345678900
-Accept: application/json
+### Buscar paciente (protegido - respeita perfil)
+GET {{host}}/pacientes/99988877766
+Authorization: Bearer {{token}}
 
 
-### ─── Consultas ────────────────────────────────────────────────
+### ─── Consultas ───────────────────────────────────────────────────
 
-### Criar consulta (Severidade: 0=Azul, 1=Verde, 2=Amarelo, 3=Laranja, 4=Vermelho)
+### Criar consulta (público - usado pela FastAPI/agent)
 POST {{host}}/consultas
 Content-Type: application/json
 
 {
-  "pacienteCpf": "12345678900",
+  "pacienteCpf": "99988877766",
   "severidade": 3,
-  "observacoes": "Dor torácica em aperto há 2h, irradia para MSE. PA 160/100. Suspeita de SCA."
+  "observacoes": "Dor torácica em aperto há 2h, PA 160/100"
 }
 
-### Listar fila de triagem (todas as consultas recentes)
+### Fila de triagem (protegido: recepcionista vê do seu consultório; paciente vê as próprias)
 GET {{host}}/consultas
-Accept: application/json
+Authorization: Bearer {{token}}
 
-### Listar com limite customizado
+### Listar com limite
 GET {{host}}/consultas?limite=10
-Accept: application/json
+Authorization: Bearer {{token}}
 
-### Buscar consulta por ID (substitua {id} pelo retorno do POST)
+### Buscar consulta por ID (protegido)
 GET {{host}}/consultas/{id}
-Accept: application/json
+Authorization: Bearer {{token}}
 
-### Listar consultas de um paciente
-GET {{host}}/consultas/paciente/12345678900
-Accept: application/json
+### Listar consultas de um paciente (protegido)
+GET {{host}}/consultas/paciente/99988877766
+Authorization: Bearer {{token}}

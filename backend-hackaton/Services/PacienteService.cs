@@ -43,6 +43,16 @@ public class PacienteService(FirestoreDb db) : IPacienteService
         return ToResponse(paciente);
     }
 
+    public async Task<Paciente?> BuscarComConsultorioAsync(string cpf)
+    {
+        var snapshot = await db.Collection(Colecao).Document(cpf).GetSnapshotAsync();
+        if (!snapshot.Exists) return null;
+
+        var p = snapshot.ConvertTo<Paciente>();
+        p.Cpf = snapshot.Id;
+        return p;
+    }
+
     private static PacienteResponse ToResponse(Paciente p) =>
         new(
             p.Cpf,

@@ -12,6 +12,7 @@ public record CriarConsultaRequest(
 public record ConsultaResponse(
     string Id,
     string PacienteCpf,
+    string ConsultorioId,
     DateTime DataConsulta,
     string Severidade,
     string? Observacoes,

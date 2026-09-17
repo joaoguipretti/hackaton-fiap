@@ -1,6 +1,9 @@
+using System.Text;
 using Anaminese.API.Endpoints;
 using Anaminese.API.Services;
 using Google.Cloud.Firestore;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,6 +35,44 @@ builder.Services.AddSingleton(_ => new FirestoreDbBuilder
 builder.Services.AddScoped<IPacienteService, PacienteService>();
 builder.Services.AddScoped<IConsultaService, ConsultaService>();
 builder.Services.AddScoped<IChatbotService, ChatbotService>();
+builder.Services.AddScoped<IConsultorioService, ConsultorioService>();
+builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+// JWT Authentication
+var jwtSection = builder.Configuration.GetSection("Jwt");
+var jwtSecret = jwtSection["SecretKey"]
+    ?? throw new InvalidOperationException("Jwt:SecretKey não configurado (appsettings.Development.json).");
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSection["Issuer"] ?? "Anaminese.API",
+            ValidAudience = jwtSection["Audience"] ?? "Anaminese.Client",
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
+        };
+        options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+        {
+            OnAuthenticationFailed = ctx =>
+            {
+                Console.WriteLine($"[JWT FAIL] {ctx.Request.Path} -> {ctx.Exception.GetType().Name}: {ctx.Exception.Message}");
+                return Task.CompletedTask;
+            },
+            OnChallenge = ctx =>
+            {
+                Console.WriteLine($"[JWT CHALLENGE] {ctx.Request.Path} -> Error={ctx.Error} Desc={ctx.ErrorDescription}");
+                return Task.CompletedTask;
+            }
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 // OpenAPI
 builder.Services.AddOpenApi();
@@ -39,6 +80,8 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 
 app.UseCors("Frontend");
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapOpenApi();
 app.MapScalarApiReference(opts => opts.Title = "Diagnostica IA API");
@@ -46,5 +89,7 @@ app.MapScalarApiReference(opts => opts.Title = "Diagnostica IA API");
 app.MapPacientes();
 app.MapConsultas();
 app.MapChatbot();
+app.MapConsultorios();
+app.MapAuth();
 
 app.Run();
