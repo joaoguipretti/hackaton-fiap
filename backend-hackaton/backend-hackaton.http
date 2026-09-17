@@ -1,11 +1,46 @@
-@backend_hackaton_HostAddress = http://localhost:5101
+@host = http://localhost:5101
 
-GET {{backend_hackaton_HostAddress}}/todos/
+### ─── Pacientes ────────────────────────────────────────────────
+
+### Cadastrar paciente
+POST {{host}}/pacientes
+Content-Type: application/json
+
+{
+  "cpf": "12345678900",
+  "nomeCompleto": "João da Silva",
+  "endereco": "Rua das Flores, 123 - São Paulo/SP"
+}
+
+### Buscar paciente por CPF
+GET {{host}}/pacientes/12345678900
 Accept: application/json
 
-###
 
-GET {{backend_hackaton_HostAddress}}/todos/1
+### ─── Consultas ────────────────────────────────────────────────
+
+### Criar consulta (Severidade: 0=Azul, 1=Verde, 2=Amarelo, 3=Laranja, 4=Vermelho)
+POST {{host}}/consultas
+Content-Type: application/json
+
+{
+  "pacienteCpf": "12345678900",
+  "severidade": 3,
+  "observacoes": "Dor torácica em aperto há 2h, irradia para MSE. PA 160/100. Suspeita de SCA."
+}
+
+### Listar fila de triagem (todas as consultas recentes)
+GET {{host}}/consultas
 Accept: application/json
 
-###
+### Listar com limite customizado
+GET {{host}}/consultas?limite=10
+Accept: application/json
+
+### Buscar consulta por ID (substitua {id} pelo retorno do POST)
+GET {{host}}/consultas/{id}
+Accept: application/json
+
+### Listar consultas de um paciente
+GET {{host}}/consultas/paciente/12345678900
+Accept: application/json

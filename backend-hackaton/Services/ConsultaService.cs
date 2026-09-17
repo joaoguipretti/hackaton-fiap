@@ -54,6 +54,22 @@ public class ConsultaService(FirestoreDb db) : IConsultaService
         });
     }
 
+    public async Task<IEnumerable<ConsultaResponse>> ListarTodasAsync(int limite = 50)
+    {
+        var query = db.Collection(Colecao)
+            .OrderByDescending("DataConsulta")
+            .Limit(limite);
+
+        var snapshot = await query.GetSnapshotAsync();
+
+        return snapshot.Documents.Select(doc =>
+        {
+            var consulta = doc.ConvertTo<Consulta>();
+            consulta.Id = doc.Id;
+            return ToResponse(consulta);
+        });
+    }
+
     private static ConsultaResponse ToResponse(Consulta c) =>
         new(c.Id, c.PacienteCpf, c.DataConsulta, c.Severidade, c.Observacoes, c.CriadoEm);
 }

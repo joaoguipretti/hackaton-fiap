@@ -7,4 +7,5 @@ public interface IConsultaService
     Task<ConsultaResponse> CriarAsync(CriarConsultaRequest request);
     Task<ConsultaResponse?> BuscarPorIdAsync(string id);
     Task<IEnumerable<ConsultaResponse>> ListarPorPacienteAsync(string cpf);
+    Task<IEnumerable<ConsultaResponse>> ListarTodasAsync(int limite = 50);
 }

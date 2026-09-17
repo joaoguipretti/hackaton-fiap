@@ -15,6 +15,10 @@ public static class ConsultaEndpoints
             .WithName("CriarConsulta")
             .WithSummary("Registra uma consulta com classificação Manchester");
 
+        group.MapGet("/", ListarTodas)
+            .WithName("ListarConsultas")
+            .WithSummary("Lista as consultas mais recentes (fila de triagem)");
+
         group.MapGet("/{id}", BuscarConsulta)
             .WithName("BuscarConsulta")
             .WithSummary("Busca consulta pelo ID");
@@ -24,6 +28,14 @@ public static class ConsultaEndpoints
             .WithSummary("Lista todas as consultas de um paciente");
 
         return group;
+    }
+
+    private static async Task<Ok<IEnumerable<ConsultaResponse>>> ListarTodas(
+        IConsultaService service,
+        int? limite)
+    {
+        var consultas = await service.ListarTodasAsync(limite ?? 50);
+        return TypedResults.Ok(consultas);
     }
 
     private static async Task<Results<Created<ConsultaResponse>, NotFound<string>>> CriarConsulta(

@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Test-Path \"C:\\\\Users\\\\joaop\\\\Desktop\\\\hackaton-api-ia\"; \\(Get-ChildItem \"C:\\\\Users\\\\joaop\\\\Desktop\\\\hackaton-api-ia\" -Force -ErrorAction SilentlyContinue\\).Count)",
+      "PowerShell(dotnet build *)",
+      "Bash(dotnet run *)",
+      "PowerShell(powershell -ExecutionPolicy ByPass -c \"irm https://astral.sh/uv/install.ps1 | iex\" 2>&1 | Select-Object -Last 15)",
+      "PowerShell(uv sync *)",
+      "Bash(\"/c/Users/joaop/.local/bin/uv.exe\" run *)",
+      "Read(//c/Users/joaop/AppData/Local/Temp/claude/C--Users-joaop-Desktop-hackaton-api-ia/18efdcc4-2ebc-48ba-a741-ea8f09f4a80e/tasks/**)",
+      "WebFetch(domain:aistudio.google.com)",
+      "WebFetch(domain:ai.google.dev)",
+      "Bash(/c/Users/joaop/.local/bin/uv.exe run --project /c/Users/joaop/Desktop/hackaton-api-ia python -c ' *)",
+      "Bash(grep -n \"app\\\\\\\\\\\\\\\\|start_interview\\\\|GoogleProvider\" \"/c/Users/joaop/AppData/Local/Temp/claude/C--Users-joaop-Desktop-hackaton-api-ia/18efdcc4-2ebc-48ba-a741-ea8f09f4a80e/tasks/b18q3g359.output\")",
+      "Bash(grep -n \"app\\\\\\\\\\\\\\\\|hackaton-api-ia\\\\\\\\\\\\\\\\app\" \"/c/Users/joaop/AppData/Local/Temp/claude/C--Users-joaop-Desktop-hackaton-api-ia/18efdcc4-2ebc-48ba-a741-ea8f09f4a80e/tasks/b18q3g359.output\")"
+    ]
+  }
+}
