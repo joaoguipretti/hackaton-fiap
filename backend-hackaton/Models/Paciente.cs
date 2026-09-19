@@ -37,4 +37,7 @@ public class Paciente
 
     [FirestoreProperty]
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
+
+    [FirestoreProperty]
+    public bool CadastroInicialConcluido { get; set; }
 }

@@ -35,14 +35,32 @@ public static class ConsultaEndpoints
             .WithName("ListarConsultasPorPaciente")
             .WithSummary("Lista consultas de um paciente (paciente: só o próprio CPF; recepcionista: só do seu consultório)");
 
+        group.MapPatch("/{id}/status", AtualizarStatus)
+            .RequireAuthorization()
+            .WithName("AtualizarStatusConsulta")
+            .WithSummary("Atualiza o status de uma consulta (recepcionista do consultório responsável)");
+
         return group;
     }
 
     private static async Task<Results<Created<ConsultaResponse>, NotFound<string>>> CriarConsulta(
         CriarConsultaRequest request,
+        ClaimsPrincipal user,
         IConsultaService consultaService,
         IPacienteService pacienteService)
     {
+        var (tipo, consultorioId, cpf) = ExtrairContexto(user);
+        if (user.Identity?.IsAuthenticated == true && tipo == TipoUsuario.Paciente)
+        {
+            if (request.PacienteCpf != cpf)
+                return TypedResults.NotFound("Paciente não autorizado.");
+            request = request with { ConsultorioId = consultorioId };
+        }
+        else if (user.Identity?.IsAuthenticated == true && tipo == TipoUsuario.Recepcionista)
+        {
+            request = request with { ConsultorioId = consultorioId };
+        }
+
         var paciente = await pacienteService.BuscarPorCpfAsync(request.PacienteCpf);
         if (paciente is null)
             return TypedResults.NotFound($"Paciente com CPF {request.PacienteCpf} não encontrado.");
@@ -115,6 +133,23 @@ public static class ConsultaEndpoints
 
         var consultas = await consultaService.ListarPorPacienteAsync(cpf);
         return TypedResults.Ok(consultas);
+    }
+
+    private static async Task<Results<Ok<ConsultaResponse>, NotFound, ForbidHttpResult>> AtualizarStatus(
+        string id,
+        AtualizarStatusConsultaRequest request,
+        ClaimsPrincipal user,
+        IConsultaService consultaService)
+    {
+        var consulta = await consultaService.BuscarPorIdAsync(id);
+        if (consulta is null) return TypedResults.NotFound();
+
+        var (tipo, consultorioId, _) = ExtrairContexto(user);
+        if (tipo != TipoUsuario.Recepcionista || consulta.ConsultorioId != consultorioId)
+            return TypedResults.Forbid();
+
+        var atualizada = await consultaService.AtualizarStatusAsync(id, request.Status, request.Severidade);
+        return atualizada is not null ? TypedResults.Ok(atualizada) : TypedResults.NotFound();
     }
 
     private static (TipoUsuario tipo, string consultorioId, string cpf) ExtrairContexto(ClaimsPrincipal user)

@@ -1,5 +1,5 @@
 from datetime import datetime
-from enum import IntEnum
+from enum import Enum, IntEnum
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -22,6 +22,16 @@ SEVERIDADE_LABELS: dict[SeveridadeManchester, str] = {
 }
 
 
+class EspecialidadeConsultorio(str, Enum):
+    """Espelha o enum EspecialidadeConsultorio do backend .NET."""
+
+    CLINICA_GERAL = "ClinicaGeral"
+    ODONTOLOGIA = "Odontologia"
+    OFTALMOLOGIA = "Oftalmologia"
+    PSICOLOGIA = "Psicologia"
+    OUTROS = "Outros"
+
+
 class ChatMessage(BaseModel):
     role: Literal["user", "assistant"]
     content: str
@@ -37,6 +47,9 @@ class StartChatRequest(BaseModel):
         default=None,
         description="Endereço para cadastro caso paciente seja novo",
     )
+    alergias: str | None = None
+    condicoes_previas: str | None = None
+    medicamentos_uso: str | None = None
 
 
 class StartChatResponse(BaseModel):
@@ -83,12 +96,30 @@ class AnamneseResult(BaseModel):
     justificativa_severidade: str = Field(
         ..., description="Por que essa cor — cite os critérios objetivos"
     )
-    resumo: str = Field(..., description="Resumo em texto corrido pra ficar no prontuário")
+    especialidade_sugerida: EspecialidadeConsultorio = Field(
+        default=EspecialidadeConsultorio.CLINICA_GERAL,
+        description="Especialidade de consultório mais adequada para o quadro relatado",
+    )
+    resumo: str = Field(
+        ..., description="Impressão clínica e conduta sugerida, sem repetir os demais campos"
+    )
 
 
 class FinalizeResponse(BaseModel):
     session_id: str
     anamnese: AnamneseResult
+
+
+class ConsultorioOption(BaseModel):
+    id: str
+    nome: str
+    endereco: str
+    especialidade: str
+
+
+class ConsultoriosSugeridosResponse(BaseModel):
+    especialidade_sugerida: EspecialidadeConsultorio
+    consultorios: list[ConsultorioOption]
 
 
 class ConfirmRequest(BaseModel):
@@ -97,6 +128,10 @@ class ConfirmRequest(BaseModel):
     endereco: str | None = Field(
         default=None,
         description="Se paciente novo e endereço ainda não foi coletado",
+    )
+    consultorio_id: str | None = Field(
+        default=None,
+        description="Consultório escolhido pelo paciente dentre as opções sugeridas pela especialidade",
     )
 
 

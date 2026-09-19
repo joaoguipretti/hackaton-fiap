@@ -6,7 +6,14 @@ class Settings(BaseSettings):
 
     gemini_api_key: str
     backend_dotnet_url: str = "http://localhost:5101"
-    gemini_model: str = "google:gemini-flash-lite-latest"
+    gemini_model: str = "google:gemini-3.5-flash-lite"
+    gemini_fallback_models: list[str] = [
+        "google:gemini-3.5-flash-lite",
+        "google:gemini-3.5-flash",
+        "google:gemini-2.5-flash",
+    ]
+    gemini_max_retries: int = 3
+    gemini_retry_backoff_seconds: float = 1.5
     cors_origins: list[str] = [
         "http://localhost:3000",
         "http://localhost:5173",

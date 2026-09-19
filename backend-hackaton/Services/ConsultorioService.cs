@@ -10,11 +10,17 @@ public class ConsultorioService(FirestoreDb db) : IConsultorioService
 
     public async Task<ConsultorioResponse> CriarAsync(CriarConsultorioRequest request)
     {
+        var especialidade = request.Especialidade == EspecialidadeConsultorio.Outros
+            && !string.IsNullOrWhiteSpace(request.EspecialidadeOutros)
+            ? request.EspecialidadeOutros.Trim()
+            : request.Especialidade.ToString();
+
         var consultorio = new Consultorio
         {
             Id = Guid.NewGuid().ToString(),
             Nome = request.Nome,
             Endereco = request.Endereco,
+            Especialidade = especialidade,
             CriadoEm = DateTime.UtcNow
         };
 
@@ -48,5 +54,5 @@ public class ConsultorioService(FirestoreDb db) : IConsultorioService
     }
 
     private static ConsultorioResponse ToResponse(Consultorio c) =>
-        new(c.Id, c.Nome, c.Endereco, c.CriadoEm);
+        new(c.Id, c.Nome, c.Endereco, c.Especialidade, c.CriadoEm);
 }

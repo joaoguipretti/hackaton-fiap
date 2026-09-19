@@ -1,8 +1,11 @@
 """Agents PydanticAI para conduzir e extrair a anamnese."""
 from __future__ import annotations
 
+import asyncio
+
 from google import genai
 from pydantic_ai import Agent
+from pydantic_ai.exceptions import ModelHTTPError
 from pydantic_ai.messages import ModelMessage
 from pydantic_ai.models.google import GoogleModel
 from pydantic_ai.providers.google import GoogleProvider
@@ -11,21 +14,49 @@ from .config import settings
 from .schemas import AnamneseResult
 
 
-def _build_model() -> GoogleModel:
+def _build_model(model_name: str) -> GoogleModel:
     """Build a GoogleModel with a manually-configured google-genai Client.
 
     Bypass PydanticAI's default http_options wiring — its httpx2 async client
     doesn't authenticate correctly with the new AI Studio API key format.
     """
-    _, _, model_name = settings.gemini_model.partition(":")
-    if not model_name:
-        model_name = settings.gemini_model
+    _, _, clean_name = model_name.partition(":")
+    if not clean_name:
+        clean_name = model_name
     client = genai.Client(api_key=settings.gemini_api_key)
     provider = GoogleProvider(client=client)
-    return GoogleModel(model_name, provider=provider)
+    return GoogleModel(clean_name, provider=provider)
 
 
-_model = _build_model()
+def _ordered_model_names() -> list[str]:
+    ordered = [settings.gemini_model]
+    for candidate in settings.gemini_fallback_models:
+        if candidate not in ordered:
+            ordered.append(candidate)
+    return ordered
+
+
+async def _run_with_model_fallback(operation, *args, **kwargs):
+    last_exc: ModelHTTPError | None = None
+    system_prompt = kwargs.pop("system_prompt", "")
+    output_type = kwargs.pop("output_type", None)
+
+    for attempt_index, model_name in enumerate(_ordered_model_names()):
+        agent_kwargs = {"system_prompt": system_prompt}
+        if output_type is not None:
+            agent_kwargs["output_type"] = output_type
+        agent = Agent(_build_model(model_name), **agent_kwargs)
+        try:
+            return await operation(agent, *args, **kwargs)
+        except ModelHTTPError as exc:
+            last_exc = exc
+            if exc.status_code not in {404, 429, 500, 502, 503} or attempt_index == len(_ordered_model_names()) - 1:
+                raise
+            if exc.status_code != 404:
+                await asyncio.sleep(settings.gemini_retry_backoff_seconds * (attempt_index + 1))
+    if last_exc is not None:
+        raise last_exc
+    raise RuntimeError("Nenhum modelo Gemini disponível para processar a requisição.")
 
 
 COMPLETION_MARKER = "[ANAMNESE_COMPLETA]"
@@ -86,22 +117,18 @@ Preencha TODOS os campos exigidos pelo schema. Regras:
     * AZUL (0): queixas não urgentes / administrativas.
   NOTA sobre o enum: os valores int são AZUL=0, VERDE=1, AMARELO=2, LARANJA=3, VERMELHO=4.
 - `justificativa_severidade`: cite objetivamente os achados que justificam a cor.
-- `resumo`: texto corrido curto (3-6 linhas) para constar no prontuário.
+- `especialidade_sugerida`: qual especialidade de consultório melhor atende a queixa:
+    * Odontologia: dor de dente, gengiva, boca, mandíbula.
+    * Oftalmologia: dor/alteração nos olhos, visão, corpo estranho ocular.
+    * Psicologia: crise de ansiedade/pânico, sofrimento emocional, ideação suicida sem risco clínico imediato.
+    * ClinicaGeral: quadros clínicos gerais (a maioria dos casos).
+    * Outros: nenhuma das anteriores se aplica claramente.
+- `resumo`: NÃO repita queixa principal, HDA, sintomas, comorbidades, medicações ou
+  alergias — esses já constam em campos próprios. Escreva só a impressão clínica
+  e a conduta sugerida (ex: "Quadro compatível com X, orienta-se Y"), em 1-3 linhas.
 
 Se algum dado não foi coletado, use listas vazias / strings vazias / null — não invente.
 """
-
-
-interview_agent = Agent(
-    _model,
-    system_prompt=INTERVIEW_SYSTEM_PROMPT,
-)
-
-extractor_agent = Agent(
-    _model,
-    output_type=AnamneseResult,
-    system_prompt=EXTRACTOR_SYSTEM_PROMPT,
-)
 
 
 async def run_interview_turn(
@@ -112,21 +139,37 @@ async def run_interview_turn(
 
     Retorna: (reply_para_usuario, nova_history_completa, is_complete)
     """
-    result = await interview_agent.run(user_message, message_history=history)
-    raw = result.output
 
-    is_complete = COMPLETION_MARKER in raw
-    reply = raw.replace(COMPLETION_MARKER, "").strip()
+    async def _call(agent: Agent, *args, **kwargs):
+        result = await agent.run(*args, **kwargs)
+        raw = result.output
+        is_complete = COMPLETION_MARKER in raw
+        reply = raw.replace(COMPLETION_MARKER, "").strip()
+        return reply, list(result.all_messages()), is_complete
 
-    return reply, list(result.all_messages()), is_complete
-
-
-async def start_interview() -> tuple[str, list[ModelMessage]]:
-    """Primeiro turno: o agent abre a conversa sem input do usuário."""
-    result = await interview_agent.run(
-        "Inicie a triagem cumprimentando o paciente e perguntando qual é a queixa principal."
+    return await _run_with_model_fallback(
+        _call,
+        user_message,
+        message_history=history,
+        system_prompt=INTERVIEW_SYSTEM_PROMPT,
     )
-    return result.output, list(result.all_messages())
+
+
+async def start_interview(patient_context: str | None = None) -> tuple[str, list[ModelMessage]]:
+    """Primeiro turno: o agent abre a conversa sem input do usuário."""
+
+    async def _call(agent: Agent, *args, **kwargs):
+        result = await agent.run(*args, **kwargs)
+        return result.output, list(result.all_messages())
+
+    context = patient_context or "Nenhum dado clínico prévio foi informado."
+    return await _run_with_model_fallback(
+        _call,
+        "Inicie a triagem cumprimentando o paciente e perguntando qual é a queixa principal. "
+        "Considere estes dados já cadastrados, confirme-os quando relevante e pergunte apenas "
+        f"o que estiver faltando:\n{context}",
+        system_prompt=INTERVIEW_SYSTEM_PROMPT,
+    )
 
 
 async def extract_anamnese(history: list[ModelMessage]) -> AnamneseResult:
@@ -145,7 +188,13 @@ async def extract_anamnese(history: list[ModelMessage]) -> AnamneseResult:
 
     transcript = "\n".join(transcript_parts) or "(sem histórico)"
 
-    result = await extractor_agent.run(
-        f"Extraia a anamnese estruturada da conversa abaixo.\n\n---\n{transcript}\n---"
+    async def _call(agent: Agent, *args, **kwargs):
+        result = await agent.run(*args, **kwargs)
+        return result.output
+
+    return await _run_with_model_fallback(
+        _call,
+        f"Extraia a anamnese estruturada da conversa abaixo.\n\n---\n{transcript}\n---",
+        system_prompt=EXTRACTOR_SYSTEM_PROMPT,
+        output_type=AnamneseResult,
     )
-    return result.output

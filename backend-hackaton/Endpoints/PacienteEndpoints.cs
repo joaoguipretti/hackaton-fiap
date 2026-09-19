@@ -26,6 +26,11 @@ public static class PacienteEndpoints
             .WithName("BuscarPaciente")
             .WithSummary("Busca paciente pelo CPF (respeita perfil)");
 
+        group.MapPut("/{cpf}", AtualizarPaciente)
+            .RequireAuthorization()
+            .WithName("AtualizarPaciente")
+            .WithSummary("Atualiza os dados do próprio paciente");
+
         return group;
     }
 
@@ -70,5 +75,20 @@ public static class PacienteEndpoints
         }
 
         return permitido ? TypedResults.Ok(paciente) : TypedResults.Forbid();
+    }
+
+    private static async Task<Results<Ok<PacienteResponse>, NotFound, ForbidHttpResult>> AtualizarPaciente(
+        string cpf,
+        AtualizarPacienteRequest request,
+        ClaimsPrincipal user,
+        IPacienteService service)
+    {
+        var tipo = user.FindFirstValue(ClaimTypes.Role);
+        var userCpf = user.FindFirstValue("cpf");
+        if (tipo != nameof(TipoUsuario.Paciente) || cpf != userCpf)
+            return TypedResults.Forbid();
+
+        var paciente = await service.AtualizarAsync(cpf, request);
+        return paciente is not null ? TypedResults.Ok(paciente) : TypedResults.NotFound();
     }
 }

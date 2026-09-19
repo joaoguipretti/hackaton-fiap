@@ -10,6 +10,7 @@ namespace Anaminese.API.Services;
 
 public class AuthService(
     IUsuarioService usuarios,
+    IPacienteService pacientes,
     IConsultorioService consultorios,
     FirestoreDb db,
     IConfiguration config) : IAuthService
@@ -18,8 +19,13 @@ public class AuthService(
 
     public async Task<LoginResponse> RegisterAsync(RegisterRequest request)
     {
-        var consultorio = await consultorios.BuscarPorIdAsync(request.ConsultorioId)
-            ?? throw new InvalidOperationException($"Consultório {request.ConsultorioId} não encontrado.");
+        var consultorioId = request.ConsultorioId ?? string.Empty;
+        if (request.Tipo == TipoUsuario.Recepcionista)
+        {
+            var consultorio = await consultorios.BuscarPorIdAsync(consultorioId)
+                ?? throw new InvalidOperationException($"Consultório {consultorioId} não encontrado.");
+            consultorioId = consultorio.Id;
+        }
 
         var existente = await usuarios.BuscarPorEmailAsync(request.Email);
         if (existente is not null)
@@ -42,7 +48,7 @@ public class AuthService(
                 Alergias = request.Alergias,
                 CondicoesPrevias = request.CondicoesPrevias,
                 MedicamentosUso = request.MedicamentosUso,
-                ConsultorioId = consultorio.Id,
+                ConsultorioId = consultorioId,
                 CriadoEm = DateTime.UtcNow
             };
             await db.Collection(PacientesCollection).Document(paciente.Cpf).SetAsync(paciente);
@@ -53,10 +59,10 @@ public class AuthService(
             request.Email,
             hash,
             request.Tipo,
-            consultorio.Id,
+            consultorioId,
             request.Tipo == TipoUsuario.Paciente ? request.Cpf : null);
 
-        return BuildLoginResponse(usuario);
+        return await BuildLoginResponseAsync(usuario);
     }
 
     public async Task<LoginResponse?> LoginAsync(LoginRequest request)
@@ -68,10 +74,37 @@ public class AuthService(
         if (!BCrypt.Net.BCrypt.Verify(request.Senha, usuario.SenhaHash))
             return null;
 
-        return BuildLoginResponse(usuario);
+        return await BuildLoginResponseAsync(usuario);
     }
 
-    private LoginResponse BuildLoginResponse(Usuario usuario)
+    public async Task<ForgotPasswordResponse> ForgotPasswordAsync(ForgotPasswordRequest request)
+    {
+        var usuario = await usuarios.BuscarPorEmailAsync(request.Email);
+        // Resposta genérica sempre, pra não revelar se o email existe (evita enumeração de usuários).
+        const string mensagem = "Se o email estiver cadastrado, um código de redefinição foi gerado.";
+        if (usuario is null)
+            return new ForgotPasswordResponse(mensagem, null);
+
+        var token = Guid.NewGuid().ToString("N");
+        await usuarios.DefinirTokenResetSenhaAsync(usuario.Id, token, DateTime.UtcNow.AddMinutes(30));
+
+        // Sem servidor de email configurado no projeto: devolve o token direto na resposta
+        // pra viabilizar o fluxo de redefinição nesta demo (MVP).
+        return new ForgotPasswordResponse(mensagem, token);
+    }
+
+    public async Task<bool> ResetPasswordAsync(ResetPasswordRequest request)
+    {
+        var usuario = await usuarios.BuscarPorTokenResetSenhaAsync(request.Token);
+        if (usuario is null || usuario.ResetSenhaExpiraEm is null || usuario.ResetSenhaExpiraEm < DateTime.UtcNow)
+            return false;
+
+        var hash = BCrypt.Net.BCrypt.HashPassword(request.NovaSenha);
+        await usuarios.RedefinirSenhaAsync(usuario.Id, hash);
+        return true;
+    }
+
+    private async Task<LoginResponse> BuildLoginResponseAsync(Usuario usuario)
     {
         var jwt = config.GetSection("Jwt");
         var secret = jwt["SecretKey"] ?? throw new InvalidOperationException("Jwt:SecretKey não configurado.");
@@ -102,6 +135,11 @@ public class AuthService(
             signingCredentials: creds);
 
         var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-        return new LoginResponse(tokenString, expiraEm, usuarios.ToResponse(usuario));
+        var paciente = usuario.Tipo == nameof(TipoUsuario.Paciente)
+            && !string.IsNullOrWhiteSpace(usuario.Cpf)
+            ? await pacientes.BuscarPorCpfAsync(usuario.Cpf)
+            : null;
+
+        return new LoginResponse(tokenString, expiraEm, usuarios.ToResponse(usuario), paciente);
     }
 }

@@ -13,5 +13,8 @@ public interface IUsuarioService
         TipoUsuario tipo,
         string consultorioId,
         string? cpf);
+    Task DefinirTokenResetSenhaAsync(string usuarioId, string token, DateTime expiraEm);
+    Task<Usuario?> BuscarPorTokenResetSenhaAsync(string token);
+    Task RedefinirSenhaAsync(string usuarioId, string novaSenhaHash);
     UsuarioResponse ToResponse(Usuario u);
 }

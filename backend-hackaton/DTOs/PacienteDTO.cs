@@ -14,6 +14,16 @@ public record CriarPacienteRequest(
     string? MedicamentosUso
 );
 
+public record AtualizarPacienteRequest(
+    string? Endereco,
+    string? CartaoSus,
+    int Idade,
+    string? Genero,
+    string? Alergias,
+    string? CondicoesPrevias,
+    string? MedicamentosUso
+);
+
 public record PacienteResponse(
     string Cpf,
     string NomeCompleto,
@@ -24,5 +34,6 @@ public record PacienteResponse(
     string? Alergias,
     string? CondicoesPrevias,
     string? MedicamentosUso,
-    DateTime CriadoEm
+    DateTime CriadoEm,
+    bool CadastroInicialConcluido
 );

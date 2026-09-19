@@ -43,6 +43,27 @@ public class PacienteService(FirestoreDb db) : IPacienteService
         return ToResponse(paciente);
     }
 
+    public async Task<PacienteResponse?> AtualizarAsync(string cpf, AtualizarPacienteRequest request)
+    {
+        var docRef = db.Collection(Colecao).Document(cpf);
+        var snapshot = await docRef.GetSnapshotAsync();
+        if (!snapshot.Exists) return null;
+
+        var paciente = snapshot.ConvertTo<Paciente>();
+        paciente.Cpf = snapshot.Id;
+        paciente.Endereco = request.Endereco ?? string.Empty;
+        paciente.CartaoSus = request.CartaoSus;
+        paciente.Idade = request.Idade;
+        paciente.Genero = request.Genero;
+        paciente.Alergias = request.Alergias;
+        paciente.CondicoesPrevias = request.CondicoesPrevias;
+        paciente.MedicamentosUso = request.MedicamentosUso;
+        paciente.CadastroInicialConcluido = true;
+        await docRef.SetAsync(paciente);
+
+        return ToResponse(paciente);
+    }
+
     public async Task<Paciente?> BuscarComConsultorioAsync(string cpf)
     {
         var snapshot = await db.Collection(Colecao).Document(cpf).GetSnapshotAsync();
@@ -64,5 +85,6 @@ public class PacienteService(FirestoreDb db) : IPacienteService
             p.Alergias,
             p.CondicoesPrevias,
             p.MedicamentosUso,
-            p.CriadoEm);
+            p.CriadoEm,
+            p.CadastroInicialConcluido);
 }

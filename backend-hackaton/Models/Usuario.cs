@@ -26,4 +26,10 @@ public class Usuario
 
     [FirestoreProperty]
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
+
+    [FirestoreProperty]
+    public string? ResetSenhaToken { get; set; }
+
+    [FirestoreProperty]
+    public DateTime? ResetSenhaExpiraEm { get; set; }
 }

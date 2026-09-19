@@ -2,6 +2,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from pydantic_ai.exceptions import ModelHTTPError
 
 from .config import settings
 from .routes.chat import router as chat_router
@@ -30,6 +32,21 @@ app.add_middleware(
 )
 
 app.include_router(chat_router)
+
+
+@app.exception_handler(ModelHTTPError)
+async def handle_model_error(_, exc: ModelHTTPError) -> JSONResponse:
+    if exc.status_code == 429:
+        return JSONResponse(
+            status_code=429,
+            content={
+                "detail": "A cota da API Gemini foi excedida. Aguarde a renovação da cota ou use uma chave/projeto com faturamento habilitado."
+            },
+        )
+    return JSONResponse(
+        status_code=502,
+        content={"detail": f"O provedor Gemini recusou a solicitação ({exc.status_code})."},
+    )
 
 
 @app.get("/health", tags=["meta"])

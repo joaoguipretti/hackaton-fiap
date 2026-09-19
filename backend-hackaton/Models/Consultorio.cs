@@ -15,5 +15,8 @@ public class Consultorio
     public string Endereco { get; set; } = string.Empty;
 
     [FirestoreProperty]
+    public string Especialidade { get; set; } = nameof(EspecialidadeConsultorio.ClinicaGeral);
+
+    [FirestoreProperty]
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 }

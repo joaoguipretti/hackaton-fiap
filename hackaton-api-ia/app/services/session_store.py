@@ -21,6 +21,9 @@ class Session:
     cpf: str
     nome_completo: str | None
     endereco: str | None
+    alergias: str | None
+    condicoes_previas: str | None
+    medicamentos_uso: str | None
     messages: list[ModelMessage] = field(default_factory=list)
     anamnese: AnamneseResult | None = None
     is_complete: bool = False
@@ -32,12 +35,23 @@ class SessionStore:
         self._sessions: dict[str, Session] = {}
         self._lock = Lock()
 
-    def create(self, cpf: str, nome_completo: str | None, endereco: str | None) -> Session:
+    def create(
+        self,
+        cpf: str,
+        nome_completo: str | None,
+        endereco: str | None,
+        alergias: str | None = None,
+        condicoes_previas: str | None = None,
+        medicamentos_uso: str | None = None,
+    ) -> Session:
         session = Session(
             id=str(uuid.uuid4()),
             cpf=cpf,
             nome_completo=nome_completo,
             endereco=endereco,
+            alergias=alergias,
+            condicoes_previas=condicoes_previas,
+            medicamentos_uso=medicamentos_uso,
         )
         with self._lock:
             self._sessions[session.id] = session

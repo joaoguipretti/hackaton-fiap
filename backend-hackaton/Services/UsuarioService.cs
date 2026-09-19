@@ -62,4 +62,38 @@ public class UsuarioService(FirestoreDb db) : IUsuarioService
         var tipo = Enum.TryParse<TipoUsuario>(u.Tipo, out var t) ? t : TipoUsuario.Paciente;
         return new UsuarioResponse(u.Id, u.Email, tipo, u.ConsultorioId, u.Cpf, u.CriadoEm);
     }
+
+    public async Task DefinirTokenResetSenhaAsync(string usuarioId, string token, DateTime expiraEm)
+    {
+        var docRef = db.Collection(Colecao).Document(usuarioId);
+        await docRef.UpdateAsync(new Dictionary<string, object>
+        {
+            ["ResetSenhaToken"] = token,
+            ["ResetSenhaExpiraEm"] = expiraEm
+        });
+    }
+
+    public async Task<Usuario?> BuscarPorTokenResetSenhaAsync(string token)
+    {
+        var query = db.Collection(Colecao).WhereEqualTo("ResetSenhaToken", token).Limit(1);
+        var snapshot = await query.GetSnapshotAsync();
+        if (snapshot.Count == 0)
+            return null;
+
+        var doc = snapshot.Documents[0];
+        var u = doc.ConvertTo<Usuario>();
+        u.Id = doc.Id;
+        return u;
+    }
+
+    public async Task RedefinirSenhaAsync(string usuarioId, string novaSenhaHash)
+    {
+        var docRef = db.Collection(Colecao).Document(usuarioId);
+        await docRef.UpdateAsync(new Dictionary<string, object>
+        {
+            ["SenhaHash"] = novaSenhaHash,
+            ["ResetSenhaToken"] = FieldValue.Delete,
+            ["ResetSenhaExpiraEm"] = FieldValue.Delete
+        });
+    }
 }

@@ -1,12 +1,13 @@
 :root {
-  --primary: #087f8c;
-  --primary-dark: #075e68;
-  --bg-app: #f2f7f5;
+  --primary: #087fce;
+  --primary-dark: #092a59;
+  --brand-teal: #0bbcae;
+  --bg-app: #f4f8fb;
   --bg-card: #ffffff;
-  --border: #d6e4e1;
-  --text-main: #17313b;
-  --text-muted: #5b7074;
-  --accent-soft: #dff3ee;
+  --border: #d8e4ee;
+  --text-main: #092a59;
+  --text-muted: #5e7183;
+  --accent-soft: #e0f5f1;
 }
 
 * {
@@ -36,7 +37,7 @@ body {
   align-items: center;
   padding-top: 1rem;
   padding-bottom: 1rem;
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
 }
@@ -45,6 +46,13 @@ body {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+.auth-brand-logo {
+  display: block;
+  width: min(150px, 48%);
+  height: auto;
+  margin: 0 auto 0.9rem;
 }
 
 .logo-icon {
@@ -73,6 +81,166 @@ body {
   font-size: 0.8rem;
   font-weight: 600;
 }
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.profile-switcher {
+  display: flex;
+  padding: 0.2rem;
+  background: #eef4f2;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.profile-switcher button {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.65rem;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.profile-switcher button.active {
+  background: white;
+  color: var(--primary-dark);
+  box-shadow: 0 1px 4px rgba(23, 49, 59, 0.12);
+}
+
+/* --- PORTAL DO PACIENTE --- */
+.patient-portal {
+  width: min(900px, 100%);
+  margin: 0 auto;
+  padding: 4rem 1.25rem 3rem;
+}
+
+.portal-intro {
+  max-width: 680px;
+  margin-bottom: 1.75rem;
+}
+
+.portal-intro h1 {
+  margin-bottom: 0.65rem;
+  color: var(--text-main);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2rem, 5vw, 3.15rem);
+  line-height: 1.08;
+}
+
+.portal-intro p { color: var(--text-muted); font-size: 1rem; line-height: 1.5; }
+
+.portal-card {
+  padding: clamp(1.25rem, 4vw, 2rem);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 18px 45px rgba(25, 76, 73, 0.1);
+}
+
+.portal-card-heading { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.5rem; }
+.portal-icon { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex: 0 0 44px; border-radius: 11px; background: var(--accent-soft); color: var(--primary-dark); }
+.portal-card-heading h2 { margin-bottom: 0.2rem; font-size: 1.15rem; }
+.portal-card-heading p { color: var(--text-muted); font-size: 0.8rem; }
+.lookup-form { margin-bottom: 1rem; }.lookup-form label { display: block; margin-bottom: 0.4rem; color: var(--text-main); font-size: 0.82rem; font-weight: 700; }
+.lookup-input-row { display: flex; gap: 0.65rem; }.lookup-input-row input { min-width: 0; flex: 1; padding: 0.85rem 0.9rem; border: 1px solid var(--border); border-radius: 8px; outline: none; color: var(--text-main); font-size: 0.92rem; }.lookup-input-row input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.15); }.lookup-input-row .btn-primary { margin-top: 0; min-width: 120px; }
+.patient-history { margin-top: 1.75rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }.history-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 0.9rem; }.history-heading h2 { font-size: 1.25rem; }.cpf-label { color: var(--text-muted); font-size: 0.75rem; }.patient-history-list { display: flex; flex-direction: column; gap: 0.55rem; }.patient-history-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.85rem; border: 1px solid var(--border); border-radius: 9px; background: #fbfefd; }.history-item-content { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 0.25rem; }.history-item-content strong { font-size: 0.9rem; }.history-item-content span { display: flex; align-items: center; gap: 0.3rem; color: var(--text-muted); font-size: 0.8rem; }.history-item-content p { color: var(--text-muted); font-size: 0.78rem; line-height: 1.35; }.history-empty { margin-top: 1.25rem; padding: 1rem; border-radius: 8px; background: var(--bg-app); color: var(--text-muted); font-size: 0.85rem; text-align: center; }.portal-card-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1.75rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.8rem; }.text-button, .back-button { display: inline-flex; align-items: center; gap: 0.35rem; border: 0; background: transparent; color: var(--primary-dark); font-weight: 800; cursor: pointer; }.back-button { margin-bottom: 1rem; color: var(--text-muted); font-size: 0.78rem; }.back-button:hover, .text-button:hover { color: var(--primary); }
+
+/* --- PAINEL DA RECEPCAO --- */
+.attendant-dashboard {
+  flex: 1;
+  width: min(1360px, 100%);
+  margin: 0 auto;
+  padding: 2.75rem clamp(1rem, 4vw, 3.5rem) 3rem;
+}
+
+.dashboard-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.75rem;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dashboard-heading h1 {
+  color: var(--text-main);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.8rem, 4vw, 2.65rem);
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-heading p { color: var(--text-muted); font-size: 0.95rem; }
+
+.refresh-button, .detail-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.7rem 0.9rem;
+  background: white;
+  color: var(--primary-dark);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.refresh-button:disabled { opacity: 0.65; cursor: wait; }
+.spin { animation: spin 0.9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.dashboard-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+.stat-card { position: relative; padding: 1.1rem 1.25rem; background: white; border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 8px 22px rgba(25, 76, 73, 0.06); }
+.stat-card span { display: block; color: var(--text-muted); font-size: 0.8rem; font-weight: 700; }
+.stat-card strong { display: block; margin-top: 0.25rem; color: var(--text-main); font-size: 1.65rem; }
+.stat-card svg { position: absolute; top: 1.15rem; right: 1.2rem; color: var(--primary); }
+.stat-card-alert svg { color: #c2410c; }.stat-card-calm svg { color: #16805b; }
+
+.consultations-workspace { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr); gap: 1rem; align-items: stretch; }
+.consultations-list-panel, .consultation-detail { min-height: 480px; background: rgba(255, 255, 255, 0.88); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 12px 30px rgba(25, 76, 73, 0.07); }
+.consultations-list-panel { padding: 1rem; }
+.list-toolbar { display: flex; gap: 0.6rem; margin-bottom: 0.9rem; }
+.search-field { display: flex; align-items: center; flex: 1; gap: 0.45rem; padding: 0 0.75rem; border: 1px solid var(--border); border-radius: 8px; background: white; color: var(--text-muted); }
+.search-field input { width: 100%; padding: 0.7rem 0; border: 0; outline: 0; color: var(--text-main); background: transparent; }
+.list-toolbar select { min-width: 125px; padding: 0 0.6rem; border: 1px solid var(--border); border-radius: 8px; background: white; color: var(--text-main); }
+.consultation-items { display: flex; flex-direction: column; gap: 0.5rem; }
+.consultation-item { display: flex; align-items: center; gap: 0.75rem; width: 100%; padding: 0.8rem; border: 1px solid transparent; border-radius: 9px; background: transparent; text-align: left; color: var(--text-main); cursor: pointer; }
+.consultation-item:hover, .consultation-item.selected { border-color: var(--border); background: #f5faf8; }
+.severity-icon { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; flex: 0 0 38px; border-radius: 9px; }
+.consultation-item-info { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 0.15rem; }
+.consultation-item-info strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.92rem; }
+.consultation-item-info span, .consultation-item-info small { color: var(--text-muted); font-size: 0.75rem; }
+.item-side { display: flex; align-items: center; gap: 0.35rem; color: var(--text-muted); }
+.severity-badge { padding: 0.3rem 0.45rem; border-radius: 5px; font-size: 0.68rem; font-weight: 800; white-space: nowrap; }
+.severity-red { color: #b42318; background: #fee4e2; }.severity-orange { color: #c2410c; background: #ffedd5; }.severity-yellow { color: #9a6700; background: #fef3c7; }.severity-green { color: #16734d; background: #dcfce7; }.severity-blue { color: #1d5d91; background: #dbeafe; }.severity-neutral { color: #52636a; background: #e7eef0; }
+.consultation-detail { padding: 1.5rem; }
+.detail-topline { display: flex; justify-content: space-between; gap: 1rem; }.detail-id { color: var(--text-muted); font-size: 0.75rem; }
+.detail-patient { display: flex; align-items: center; gap: 0.75rem; padding: 1.2rem 0; border-bottom: 1px solid var(--border); }.detail-avatar { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; background: var(--accent-soft); color: var(--primary-dark); }.detail-patient h2 { font-size: 1.1rem; }.detail-patient p { margin-top: 0.2rem; color: var(--text-muted); font-size: 0.8rem; }
+.classification-card { display: flex; align-items: center; gap: 0.75rem; margin: 1.25rem 0; padding: 1rem; border-radius: 9px; }.classification-card span, .classification-card small { display: block; font-size: 0.75rem; }.classification-card strong { display: block; margin: 0.2rem 0; font-size: 1.12rem; }.classification-icon { display: flex; }.classification-card.severity-red .classification-icon { color: #b42318; }.classification-card.severity-orange .classification-icon { color: #c2410c; }.classification-card.severity-yellow .classification-icon { color: #9a6700; }.classification-card.severity-green .classification-icon { color: #16734d; }.classification-card.severity-blue .classification-icon { color: #1d5d91; }
+.detail-info { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); }.detail-info span, .observations > span { display: block; margin-bottom: 0.35rem; color: var(--text-muted); font-size: 0.75rem; }.detail-info strong { display: flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; }.status-ready { color: #16734d; }.observations { padding: 1.2rem 0; }.observations p { color: var(--text-main); font-size: 0.85rem; line-height: 1.45; }.detail-action { width: 100%; margin-top: 0.25rem; background: var(--primary); color: white; border-color: var(--primary); }.detail-action:hover { background: var(--primary-dark); }.detail-action:disabled { opacity: 0.6; cursor: not-allowed; }
+.status-select { width: 100%; padding: 0.55rem 0.6rem; border: 1px solid var(--border); border-radius: 8px; background: white; color: var(--text-main); font-size: 0.85rem; }
+.status-select:focus { border-color: var(--primary); outline: none; }
+.status-select:disabled { opacity: 0.6; cursor: not-allowed; }
+.empty-state { display: flex; align-items: center; justify-content: center; min-height: 340px; flex-direction: column; gap: 0.55rem; color: var(--text-muted); text-align: center; }.empty-state p { color: var(--text-main); font-weight: 700; }.empty-state span { font-size: 0.8rem; }.detail-empty { min-height: 430px; }
 
 /* --- FORMULÁRIO (ETAPA 1) --- */
 .container-center {
@@ -222,6 +390,43 @@ body {
   border-radius: 10px;
 }
 
+.form-success {
+  color: #15803d;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  padding: 0.75rem;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+}
+
+.password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-field input {
+  width: 100%;
+  padding-right: 2.6rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.password-toggle:hover {
+  color: var(--primary-dark);
+}
+
 @keyframes fade-in {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
@@ -302,6 +507,93 @@ body {
   font-size: 0.85rem;
 }
 
+.patient-consultations-panel {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+.consultations-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  background: transparent;
+  color: var(--text-main);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.consultations-toggle span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.rotate-90 { transform: rotate(90deg); }
+
+.patient-chat-history {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.patient-chat-consultation {
+  padding: 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--bg-app);
+  font-size: 0.72rem;
+}
+
+.patient-chat-consultation > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.patient-chat-consultation strong { color: var(--primary-dark); }
+.patient-chat-consultation span { color: var(--text-muted); }
+.patient-chat-consultation p { margin-top: 0.35rem; color: var(--text-muted); line-height: 1.35; }
+.history-status { color: var(--text-muted); font-size: 0.75rem; line-height: 1.35; }
+
+.refresh-history-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  border: 0;
+  background: transparent;
+  color: var(--primary-dark);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.new-triage-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid var(--primary);
+  border-radius: 7px;
+  background: var(--primary);
+  color: white;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.new-triage-button:hover { background: var(--primary-dark); }
+.new-triage-button:disabled { cursor: not-allowed; opacity: 0.6; }
+
 .ai-notice {
   margin-top: auto;
   background-color: var(--bg-app);
@@ -312,6 +604,49 @@ body {
   color: var(--primary-dark);
   font-size: 0.8rem;
   line-height: 1.3;
+}
+
+.clinic-selection {
+  margin-top: auto;
+  background-color: #fff;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 10px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.clinic-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.clinic-option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.clinic-option.selected {
+  border-color: var(--primary-dark);
+  background-color: var(--bg-app);
+}
+
+.clinic-option span {
+  display: flex;
+  flex-direction: column;
+}
+
+.clinic-option small {
+  color: #64748b;
 }
 
 .chat-container {
@@ -420,8 +755,40 @@ body {
   cursor: not-allowed;
 }
 
+/* --- RESPONSIVIDADE PARA TABLETS/TELAS MÉDIAS --- */
+@media (max-width: 1024px) {
+  .consultations-workspace { grid-template-columns: 1fr; }
+  .consultation-detail { min-height: 0; }
+  .attendant-dashboard { padding-left: 1.25rem; padding-right: 1.25rem; }
+  .chat-layout { grid-template-columns: 240px 1fr; }
+}
+
 /* --- RESPONSIVIDADE PARA SMARTPHONES --- */
 @media (max-width: 768px) {
+  .patient-header { flex-wrap: wrap; row-gap: 0.5rem; }
+  .header-actions { gap: 0.35rem; }
+  .header-badge { display: none; }
+  .profile-switcher button { padding: 0.4rem; font-size: 0; }
+  .profile-switcher button svg { width: 17px; height: 17px; }
+  .dashboard-heading { align-items: flex-start; flex-direction: column; }
+  .refresh-button { width: 100%; }
+  .dashboard-stats { grid-template-columns: 1fr; }
+  .consultations-workspace { grid-template-columns: 1fr; }
+  .consultation-detail { min-height: 0; }
+  .item-side .severity-badge { display: none; }
+  .list-toolbar { flex-direction: column; }
+  .list-toolbar select { min-height: 40px; }
+  .detail-topline { flex-wrap: wrap; }
+  .detail-info { grid-template-columns: 1fr; }
+  .clinic-option { flex-wrap: wrap; }
+
+  .patient-portal { padding-top: 2.5rem; }
+  .lookup-input-row { flex-direction: column; }
+  .lookup-input-row .btn-primary { width: 100%; }
+  .history-heading, .portal-card-footer { align-items: flex-start; flex-direction: column; }
+  .patient-history-item { align-items: flex-start; }
+  .patient-history-item .severity-badge { margin-left: auto; }
+
   .chat-layout {
     grid-template-columns: 1fr;
   }
@@ -438,4 +805,19 @@ body {
     flex-direction: column;
     gap: 1rem;
   }
+
+  .form-card { padding: 1.5rem; border-radius: 18px; }
+}
+
+/* --- RESPONSIVIDADE PARA TELAS BEM PEQUENAS --- */
+@media (max-width: 420px) {
+  .form-card { padding: 1.1rem; }
+  .card-header h2 { font-size: 1.25rem; }
+  .btn-primary { padding: 0.75rem; font-size: 0.88rem; }
+  .message-row { max-width: 100%; }
+  .message-bubble { padding: 0.7rem 0.9rem; font-size: 0.88rem; }
+  .chat-input-bar { padding: 0.75rem; }
+  .consultation-item { flex-wrap: wrap; }
+  .clinic-options { max-height: 180px; }
+  .stat-card strong { font-size: 1.35rem; }
 }

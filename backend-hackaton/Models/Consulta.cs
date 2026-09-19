@@ -21,6 +21,9 @@ public class Consulta
     public string Severidade { get; set; } = nameof(SeveridadeManchester.Verde);
 
     [FirestoreProperty]
+    public string Status { get; set; } = nameof(StatusConsulta.AguardandoAtendimento);
+
+    [FirestoreProperty]
     public string? Observacoes { get; set; }
 
     [FirestoreProperty]

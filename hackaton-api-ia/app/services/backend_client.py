@@ -34,6 +34,8 @@ class BackendClient:
                 "endereco": endereco,
             },
         )
+        if r.status_code == 409:
+            return {}
         r.raise_for_status()
         return r.json()
 
@@ -42,15 +44,21 @@ class BackendClient:
         paciente_cpf: str,
         severidade: SeveridadeManchester,
         observacoes: str | None,
+        consultorio_id: str | None = None,
     ) -> dict:
-        r = await self._client.post(
-            "/consultas",
-            json={
-                "pacienteCpf": paciente_cpf,
-                "severidade": int(severidade),
-                "observacoes": observacoes,
-            },
-        )
+        payload = {
+            "pacienteCpf": paciente_cpf,
+            "severidade": int(severidade),
+            "observacoes": observacoes,
+        }
+        if consultorio_id:
+            payload["consultorioId"] = consultorio_id
+        r = await self._client.post("/consultas", json=payload)
+        r.raise_for_status()
+        return r.json()
+
+    async def listar_consultorios(self) -> list[dict]:
+        r = await self._client.get("/consultorios")
         r.raise_for_status()
         return r.json()
 

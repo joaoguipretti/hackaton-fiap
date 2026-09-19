@@ -42,7 +42,9 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 // JWT Authentication
 var jwtSection = builder.Configuration.GetSection("Jwt");
 var jwtSecret = jwtSection["SecretKey"]
-    ?? throw new InvalidOperationException("Jwt:SecretKey não configurado (appsettings.Development.json).");
+    ?? throw new InvalidOperationException("Jwt:SecretKey não configurado. Defina uma chave segura no ambiente.");
+if (string.IsNullOrWhiteSpace(jwtSecret) || jwtSecret.Length < 32)
+    throw new InvalidOperationException("Jwt:SecretKey deve ter pelo menos 32 caracteres.");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
