@@ -17,7 +17,6 @@ import {
   AlertTriangle,
   ChevronRight,
   CalendarDays,
-  ArrowLeft,
   Plus,
   Eye,
   EyeOff
@@ -95,7 +94,7 @@ export default function App() {
   const [forgotMessage, setForgotMessage] = useState('');
   const [isSendingForgot, setIsSendingForgot] = useState(false);
   const [isResettingPassword, setIsResettingPassword] = useState(false);
-  const [step, setStep] = useState('portal');
+  const [step, setStep] = useState('form');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
@@ -140,6 +139,12 @@ export default function App() {
   const [showPatientConsultations, setShowPatientConsultations] = useState(false);
   const [showPatientHistoryView, setShowPatientHistoryView] = useState(false);
   const [hasInitializedLoggedPatientChat, setHasInitializedLoggedPatientChat] = useState(false);
+  const [isCheckingCadastro, setIsCheckingCadastro] = useState(() => {
+    const saved = localStorage.getItem('diagnostica_user');
+    if (!saved) return false;
+    const savedUser = JSON.parse(saved);
+    return !(savedUser.tipo === 1 || savedUser.tipo === 'Recepcionista');
+  });
 
   const authHeaders = authToken ? { Authorization: `Bearer ${authToken}` } : {};
 
@@ -219,9 +224,16 @@ export default function App() {
           email: authUser.email || current.email || '',
         }));
 
-        await startChat(basePatient);
+        // Só retoma o chat automaticamente se o cadastro inicial já foi concluído antes.
+        if (patient?.cadastroInicialConcluido) {
+          await startChat(basePatient);
+        } else {
+          setStep('form');
+        }
       } catch {
         setStep('form');
+      } finally {
+        setIsCheckingCadastro(false);
       }
     };
 
@@ -331,6 +343,8 @@ export default function App() {
       if (nextProfile === 'attendant') {
         await loadConsultations(data.token);
       } else {
+        // Evita que o efeito de retomada de sessão rode de novo por cima do fluxo de login.
+        setHasInitializedLoggedPatientChat(true);
         let patient = data.paciente;
         if (!patient && user.cpf) {
           const patientResponse = await fetch(`${API_URL}/pacientes/${encodeURIComponent(user.cpf)}`, {
@@ -386,7 +400,7 @@ export default function App() {
     setProfile(null);
     setConsultations([]);
     setHasInitializedLoggedPatientChat(false);
-    setStep('portal');
+    setStep('form');
     setAuthMode('login');
   };
 
@@ -552,12 +566,6 @@ export default function App() {
     }
   };
 
-  const handlePatientLookup = async (event) => {
-    event.preventDefault();
-    await loadPatientConsultations();
-    setFormData((current) => ({ ...current, cpf: patientCpf.trim() }));
-  };
-
   const openPatientHistoryView = async () => {
     setShowPatientConsultations(false);
     await loadPatientConsultations();
@@ -623,6 +631,8 @@ export default function App() {
         setAuthUser(user);
         setProfile('patient');
         setPatientCpf(user.cpf);
+        // Evita que o efeito de retomada de sessão rode por cima do cadastro recém-criado.
+        setHasInitializedLoggedPatientChat(true);
         setStep('form');
         return;
       }
@@ -905,6 +915,14 @@ export default function App() {
   }
 
   if (profile === 'patient') {
+    if (isCheckingCadastro) {
+      return (
+        <main className="container-center px-4 sm:px-8">
+          <div className="empty-state"><RefreshCw className="spin" size={25} /><p>Carregando seus dados...</p></div>
+        </main>
+      );
+    }
+
     if (showPatientHistoryView) {
       return (
         <div className="patient-app">
@@ -966,6 +984,7 @@ export default function App() {
       );
     }
 
+    if (step === 'chat') {
     return (
       <div className="patient-app">
         <header className="patient-header px-5 sm:px-8">
@@ -1095,6 +1114,7 @@ export default function App() {
         </main>
       </div>
     );
+    }
   }
 
   return (
@@ -1219,58 +1239,11 @@ export default function App() {
         </main>
       )}
 
-      {/* --- PORTAL DO PACIENTE --- */}
-      {profile === 'patient' && step === 'portal' && (
-        <main className="patient-portal">
-          <section className="portal-intro">
-            <span className="eyebrow">Área do paciente</span>
-            <h1>Suas consultas, em um só lugar.</h1>
-            <p>Consulte o histórico e as datas dos seus atendimentos.</p>
-          </section>
-
-          <section className="portal-card">
-            <div className="portal-card-heading">
-              <div className="portal-icon"><CalendarDays size={22} /></div>
-              <div><h2>Consultar minhas consultas</h2><p>Usamos seu CPF apenas para localizar seus atendimentos.</p></div>
-            </div>
-            <form className="lookup-form" onSubmit={handlePatientLookup}>
-              <label htmlFor="patient-cpf">CPF</label>
-              <div className="lookup-input-row">
-                <input id="patient-cpf" type="text" required readOnly value={patientCpf} />
-                <button className="btn-primary" type="submit" disabled={isLoadingPatientConsultations}>
-                  {isLoadingPatientConsultations ? 'Buscando...' : 'Consultar'}
-                </button>
-              </div>
-            </form>
-            {patientLookupError && <p className="form-error" role="alert">{patientLookupError}</p>}
-
-            {patientConsultations.length > 0 && <div className="patient-history">
-              <div className="history-heading"><div><span className="eyebrow">Histórico encontrado</span><h2>{patientConsultations.length} {patientConsultations.length === 1 ? 'consulta registrada' : 'consultas registradas'}</h2></div><span className="cpf-label">CPF {patientCpf}</span></div>
-              <div className="patient-history-list">
-                {patientConsultations.map((consultation) => {
-                  const severity = getSeverity(consultation.severidade);
-                  const SeverityIcon = severity.icon;
-                  return <article className="patient-history-item" key={consultation.id}>
-                    <div className={`severity-icon ${severity.className}`}><SeverityIcon size={18} /></div>
-                    <div className="history-item-content"><strong>Consulta realizada</strong><span><CalendarDays size={14} /> {formatDate(consultation.dataConsulta)}</span><span>{consultation.consultorioNome}</span>{consultation.observacoes && <p>{consultation.observacoes}</p>}</div>
-                    <span className={`severity-badge ${severity.className}`}>{severity.label}</span>
-                  </article>;
-                })}
-              </div>
-            </div>}
-
-            {patientConsultations.length === 0 && patientLookupError === '' && !isLoadingPatientConsultations && patientCpf && <p className="history-empty">Nenhuma consulta encontrada para este CPF.</p>}
-            <div className="portal-card-footer"><span>Ainda não iniciou seu atendimento?</span><button type="button" className="text-button" onClick={() => setStep('form')}>Ir para o cadastro <ArrowRight size={15} /></button></div>
-          </section>
-        </main>
-      )}
-
       {/* --- ETAPA 1: FORMULÁRIO DE CADASTRO --- */}
       {profile === 'patient' && step === 'form' && (
         <main className="container-center px-4 sm:px-8">
           <div className="form-card motion-safe:animate-[fade-in_500ms_ease-out]">
             <div className="card-header">
-              <button type="button" className="back-button" onClick={() => setStep('portal')}><ArrowLeft size={16} /> Voltar às consultas</button>
               <div className="icon-wrapper">
                 <FileText size={24} />
               </div>
