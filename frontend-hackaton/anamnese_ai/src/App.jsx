@@ -19,7 +19,9 @@ import {
   CalendarDays,
   Plus,
   Eye,
-  EyeOff
+  EyeOff,
+  Building2,
+  MapPin
 } from 'lucide-react';
 import './App.css';
 
@@ -62,6 +64,24 @@ const STATUS_OPTIONS = [
   { value: 3, name: 'Cancelada', label: 'Cancelada' },
 ];
 const STATUS_VALUE_BY_NAME = Object.fromEntries(STATUS_OPTIONS.map((option) => [option.name, option.value]));
+
+const ESPECIALIDADE_LABELS = {
+  ClinicaGeral: 'Clínica Geral',
+  Odontologia: 'Odontologia',
+  Oftalmologia: 'Oftalmologia',
+  Psicologia: 'Psicologia',
+  Cardiologia: 'Cardiologia',
+  Dermatologia: 'Dermatologia',
+  Ginecologia: 'Ginecologia',
+  Ortopedia: 'Ortopedia',
+  Pediatria: 'Pediatria',
+  Psiquiatria: 'Psiquiatria',
+  Otorrinolaringologia: 'Otorrinolaringologia',
+  Urologia: 'Urologia',
+  Neurologia: 'Neurologia',
+  Endocrinologia: 'Endocrinologia',
+  Outros: 'Outra especialidade',
+};
 
 const SEVERIDADE_OPTIONS = [
   { value: 0, name: 'Azul', label: 'Azul — não urgente' },
@@ -926,17 +946,19 @@ export default function App() {
     if (showPatientHistoryView) {
       return (
         <div className="patient-app">
-          <header className="patient-header px-5 sm:px-8">
-            <div className="logo-area">
-              <Heart className="logo-icon" size={26} />
-              <span className="logo-text">Diagnostica <span className="logo-highlight">IA</span></span>
-            </div>
-            <div className="header-actions">
-              <div className="profile-switcher" aria-label="Perfil autenticado">
-                <span className="active"><><User size={15} /> Paciente</></span>
+          <header className="patient-header">
+            <div className="header-inner">
+              <div className="logo-area">
+                <Heart className="logo-icon" size={26} />
+                <span className="logo-text">Diagnostica <span className="logo-highlight">IA</span></span>
               </div>
-              <button type="button" className="text-button" onClick={() => setShowPatientHistoryView(false)}>Voltar ao chat</button>
-              <button type="button" className="text-button" onClick={logout}>Sair</button>
+              <div className="header-actions">
+                <div className="profile-switcher" aria-label="Perfil autenticado">
+                  <span className="active"><><User size={15} /> Paciente</></span>
+                </div>
+                <button type="button" className="text-button" onClick={() => setShowPatientHistoryView(false)}>Voltar ao chat</button>
+                <button type="button" className="text-button" onClick={logout}>Sair</button>
+              </div>
             </div>
           </header>
 
@@ -986,21 +1008,23 @@ export default function App() {
 
     if (step === 'chat') {
     return (
-      <div className="patient-app">
-        <header className="patient-header px-5 sm:px-8">
-          <div className="logo-area">
-            <Heart className="logo-icon" size={26} />
-            <span className="logo-text">Diagnostica <span className="logo-highlight">IA</span></span>
-          </div>
-          <div className="header-actions">
-            <div className="profile-switcher" aria-label="Perfil autenticado">
-              <span className="active"><><User size={15} /> Paciente</></span>
+      <div className="patient-app chat-viewport">
+        <header className="patient-header">
+          <div className="header-inner">
+            <div className="logo-area">
+              <Heart className="logo-icon" size={26} />
+              <span className="logo-text">Diagnostica <span className="logo-highlight">IA</span></span>
             </div>
-            <div className="header-badge">
-              <ShieldCheck size={16} />
-              <span>Portal do Paciente</span>
+            <div className="header-actions">
+              <div className="profile-switcher" aria-label="Perfil autenticado">
+                <span className="active"><><User size={15} /> Paciente</></span>
+              </div>
+              <div className="header-badge">
+                <ShieldCheck size={16} />
+                <span>Portal do Paciente</span>
+              </div>
+              <button type="button" className="text-button" onClick={logout}>Sair</button>
             </div>
-            <button type="button" className="text-button" onClick={logout}>Sair</button>
           </div>
         </header>
 
@@ -1069,9 +1093,46 @@ export default function App() {
               ))}
             </div>
 
-            {clinicOptions.length > 0 && !triageResult && (
-              <div className="clinic-selection">
-                <p>Escolha a cl&iacute;nica para sua consulta:</p>
+            {triageResult && (
+              <div className="ai-notice">
+                <CheckCircle2 size={16} />
+                <p>Consulta registrada. A equipe receberá o resumo da triagem e confirmará a prioridade no atendimento.</p>
+              </div>
+            )}
+            {isFinalizingTriage && <div className="ai-notice"><RefreshCw className="spin" size={16} /><p>Consolidando a triagem e registrando a consulta...</p></div>}
+            <form onSubmit={handleSendMessage} className="chat-input-bar">
+              <div className="chat-input-inner">
+                <input
+                  type="text"
+                  placeholder="Descreva o que está sentindo..."
+                  value={inputMsg}
+                  onChange={(e) => setInputMsg(e.target.value)}
+                  disabled={isFinalizingTriage || Boolean(triageResult) || clinicOptions.length > 0}
+                />
+                <button type="submit" className="send-button" disabled={!inputMsg.trim() || isFinalizingTriage || Boolean(triageResult) || clinicOptions.length > 0}>
+                  <Send size={18} />
+                </button>
+              </div>
+            </form>
+          </section>
+        </main>
+
+        {clinicOptions.length > 0 && !triageResult && (
+          <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="clinic-modal-title">
+            <div className="modal-card">
+              <div className="modal-header">
+                <div className="modal-icon"><Building2 size={22} /></div>
+                <div className="modal-header-text">
+                  <span className="eyebrow">Triagem concluída</span>
+                  <h2 id="clinic-modal-title">Escolha a clínica</h2>
+                  <p>
+                    {pendingAnamnese
+                      ? <>Encontramos <strong>{clinicOptions.length}</strong> {clinicOptions.length === 1 ? 'opção' : 'opções'} de <strong>{ESPECIALIDADE_LABELS[pendingAnamnese.especialidade_sugerida] || pendingAnamnese.especialidade_sugerida}</strong> para o seu atendimento.</>
+                      : <>Selecione o consultório onde você quer ser atendido.</>}
+                  </p>
+                </div>
+              </div>
+              <div className="modal-body">
                 <div className="clinic-options">
                   {clinicOptions.map((clinic) => (
                     <label key={clinic.id} className={`clinic-option ${selectedClinicId === clinic.id ? 'selected' : ''}`}>
@@ -1082,36 +1143,22 @@ export default function App() {
                         checked={selectedClinicId === clinic.id}
                         onChange={() => setSelectedClinicId(clinic.id)}
                       />
-                      <span><strong>{clinic.nome}</strong><small>{clinic.endereco}</small></span>
+                      <span className="clinic-option-content">
+                        <strong>{clinic.nome}</strong>
+                        <small><MapPin size={12} /> {clinic.endereco}</small>
+                      </span>
                     </label>
                   ))}
                 </div>
+              </div>
+              <div className="modal-footer">
                 <button type="button" className="btn-primary" onClick={handleConfirmClinicSelection} disabled={!selectedClinicId || isConfirmingConsulta}>
-                  {isConfirmingConsulta ? 'Registrando...' : 'Confirmar consulta'}
+                  {isConfirmingConsulta ? 'Registrando...' : <>Confirmar consulta <ArrowRight size={16} /></>}
                 </button>
               </div>
-            )}
-            {triageResult && (
-              <div className="ai-notice">
-                <CheckCircle2 size={16} />
-                <p>Consulta registrada. A equipe receberá o resumo da triagem e confirmará a prioridade no atendimento.</p>
-              </div>
-            )}
-            {isFinalizingTriage && <div className="ai-notice"><RefreshCw className="spin" size={16} /><p>Consolidando a triagem e registrando a consulta...</p></div>}
-            <form onSubmit={handleSendMessage} className="chat-input-bar">
-              <input
-                type="text"
-                placeholder="Descreva o que está sentindo..."
-                value={inputMsg}
-                onChange={(e) => setInputMsg(e.target.value)}
-                disabled={isFinalizingTriage || Boolean(triageResult) || clinicOptions.length > 0}
-              />
-              <button type="submit" className="send-button" disabled={!inputMsg.trim() || isFinalizingTriage || Boolean(triageResult) || clinicOptions.length > 0}>
-                <Send size={18} />
-              </button>
-            </form>
-          </section>
-        </main>
+            </div>
+          </div>
+        )}
       </div>
     );
     }
@@ -1120,20 +1167,22 @@ export default function App() {
   return (
     <div className={`patient-app ${profile === 'attendant' ? 'attendant-app' : ''}`}>
       {/* --- HEADER --- */}
-      <header className="patient-header px-5 sm:px-8">
-        <div className="logo-area">
-          <Heart className="logo-icon" size={26} />
-          <span className="logo-text">Diagnostica <span className="logo-highlight">IA</span></span>
-        </div>
-        <div className="header-actions">
-          <div className="profile-switcher" aria-label="Perfil autenticado">
-            <span className="active">{profile === 'patient' ? <><User size={15} /> Paciente</> : <><ClipboardList size={15} /> Recepção</>}</span>
+      <header className="patient-header">
+        <div className="header-inner">
+          <div className="logo-area">
+            <Heart className="logo-icon" size={26} />
+            <span className="logo-text">Diagnostica <span className="logo-highlight">IA</span></span>
           </div>
-          <div className="header-badge">
-            {profile === 'patient' ? <ShieldCheck size={16} /> : <ClipboardList size={16} />}
-            <span>{profile === 'patient' ? 'Portal do Paciente' : 'Painel da Recepção'}</span>
+          <div className="header-actions">
+            <div className="profile-switcher" aria-label="Perfil autenticado">
+              <span className="active">{profile === 'patient' ? <><User size={15} /> Paciente</> : <><ClipboardList size={15} /> Recepção</>}</span>
+            </div>
+            <div className="header-badge">
+              {profile === 'patient' ? <ShieldCheck size={16} /> : <ClipboardList size={16} />}
+              <span>{profile === 'patient' ? 'Portal do Paciente' : 'Painel da Recepção'}</span>
+            </div>
+            <button type="button" className="text-button" onClick={logout}>Sair</button>
           </div>
-          <button type="button" className="text-button" onClick={logout}>Sair</button>
         </div>
       </header>
 
@@ -1159,6 +1208,12 @@ export default function App() {
 
           <section className="consultations-workspace">
             <div className="consultations-list-panel">
+              <div className="list-header">
+                <div>
+                  <span className="eyebrow">Fila de atendimento</span>
+                  <h2>{filteredConsultations.length} {filteredConsultations.length === 1 ? 'paciente' : 'pacientes'}</h2>
+                </div>
+              </div>
               <div className="list-toolbar">
                 <div className="search-field"><Search size={16} /><input value={consultationSearch} onChange={(event) => setConsultationSearch(event.target.value)} placeholder="Buscar por nome ou CPF" /></div>
                 <select value={consultationFilter} onChange={(event) => setConsultationFilter(event.target.value)} aria-label="Filtrar por classificação">
@@ -1175,8 +1230,15 @@ export default function App() {
                   const SeverityIcon = severity.icon;
                   return <button key={consultation.id} className={`consultation-item ${selectedConsultation?.id === consultation.id ? 'selected' : ''}`} onClick={() => setSelectedConsultation(consultation)}>
                     <div className={`severity-icon ${severity.className}`}><SeverityIcon size={18} /></div>
-                    <div className="consultation-item-info"><strong>{consultation.patientName}</strong><span>CPF {consultation.pacienteCpf}</span><small>{consultation.consultorioNome} · {formatDate(consultation.dataConsulta)}</small></div>
-                    <div className="item-side"><span className={`severity-badge ${severity.className}`}>{severity.label}</span><ChevronRight size={17} /></div>
+                    <div className="consultation-item-info">
+                      <strong>{consultation.patientName}</strong>
+                      <span className="item-cpf">CPF {consultation.pacienteCpf}</span>
+                      <small><CalendarDays size={12} /> {formatDate(consultation.dataConsulta)} · {consultation.consultorioNome}</small>
+                    </div>
+                    <div className="item-side">
+                      <span className={`severity-badge ${severity.className}`}>{severity.label}</span>
+                      <ChevronRight size={17} className="item-chevron" />
+                    </div>
                   </button>;
                 })}
               </div>}
@@ -1189,49 +1251,94 @@ export default function App() {
                 const hasPendingChanges = pendingStatus !== (STATUS_VALUE_BY_NAME[selectedConsultation.status] ?? 0)
                   || pendingSeveridade !== (SEVERIDADE_VALUE_BY_NAME[selectedConsultation.severidade] ?? 0);
                 return <>
-                  <div className="detail-topline"><span className="eyebrow">Detalhes da consulta</span><span className="detail-id">#{selectedConsultation.id.slice(0, 8)}</span></div>
-                  <div className="detail-patient"><div className="detail-avatar"><User size={24} /></div><div><h2>{selectedConsultation.patientName}</h2><p>CPF {selectedConsultation.pacienteCpf}</p></div></div>
-                  <div className={`classification-card ${severity.className}`}><div className="classification-icon"><SeverityIcon size={22} /></div><div><span>Classificação Manchester</span><strong>{severity.label}</strong><small>Nível {selectedConsultation.severidade}</small></div></div>
-                  <div className="detail-info">
-                    <div><span>Data de entrada</span><strong>{formatDate(selectedConsultation.dataConsulta)}</strong></div>
-                    <div>
-                      <span>Classificação</span>
-                      <select
-                        className="status-select"
-                        value={pendingSeveridade}
-                        onChange={(event) => setPendingSeveridade(Number(event.target.value))}
-                        disabled={isUpdatingStatus}
-                      >
-                        {SEVERIDADE_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>{option.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <span>Status</span>
-                      <select
-                        className="status-select"
-                        value={pendingStatus}
-                        onChange={(event) => setPendingStatus(Number(event.target.value))}
-                        disabled={isUpdatingStatus}
-                      >
-                        {STATUS_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>{option.label}</option>
-                        ))}
-                      </select>
+                  <div className="detail-topline">
+                    <span className="eyebrow">Detalhes da consulta</span>
+                    <span className="detail-id">#{selectedConsultation.id.slice(0, 8)}</span>
+                  </div>
+
+                  <div className="detail-patient">
+                    <div className="detail-avatar"><User size={26} /></div>
+                    <div className="detail-patient-info">
+                      <h2>{selectedConsultation.patientName}</h2>
+                      <p>CPF {selectedConsultation.pacienteCpf}</p>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    className="detail-action"
-                    onClick={handleUpdateStatus}
-                    disabled={isUpdatingStatus || !hasPendingChanges}
-                  >
-                    <CheckCircle2 size={17} /> {isUpdatingStatus ? 'Confirmando...' : 'Confirmar consulta'}
-                  </button>
+
+                  <div className={`classification-card ${severity.className}`}>
+                    <div className="classification-icon"><SeverityIcon size={22} /></div>
+                    <div className="classification-info">
+                      <span>Classificação Manchester</span>
+                      <strong>{severity.label}</strong>
+                      <small>Nível {selectedConsultation.severidade}</small>
+                    </div>
+                  </div>
+
+                  <section className="detail-section">
+                    <h3 className="section-title">Contexto</h3>
+                    <div className="context-grid">
+                      <div className="context-item">
+                        <span><CalendarDays size={13} /> Data de entrada</span>
+                        <strong>{formatDate(selectedConsultation.dataConsulta)}</strong>
+                      </div>
+                      <div className="context-item">
+                        <span><Building2 size={13} /> Consultório</span>
+                        <strong>{selectedConsultation.consultorioNome}</strong>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className="detail-section">
+                    <h3 className="section-title">Ajustar prioridade</h3>
+                    <div className="adjust-grid">
+                      <label className="adjust-field">
+                        <span>Classificação</span>
+                        <select
+                          className="status-select"
+                          value={pendingSeveridade}
+                          onChange={(event) => setPendingSeveridade(Number(event.target.value))}
+                          disabled={isUpdatingStatus}
+                        >
+                          {SEVERIDADE_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="adjust-field">
+                        <span>Status</span>
+                        <select
+                          className="status-select"
+                          value={pendingStatus}
+                          onChange={(event) => setPendingStatus(Number(event.target.value))}
+                          disabled={isUpdatingStatus}
+                        >
+                          {STATUS_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>{option.label}</option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  </section>
+
+                  <section className="detail-section">
+                    <h3 className="section-title">Observações da triagem</h3>
+                    <div className={`observations-card ${selectedConsultation.observacoes ? '' : 'is-empty'}`}>
+                      <p>{selectedConsultation.observacoes || 'Nenhuma observação registrada.'}</p>
+                    </div>
+                  </section>
+
                   {statusUpdateError && <p className="form-error" role="alert">{statusUpdateError}</p>}
-                  <div className="detail-info"><div><span>Consultório</span><strong>{selectedConsultation.consultorioNome}</strong></div></div>
-                  <div className="observations"><span>Observações da triagem</span><p>{selectedConsultation.observacoes || 'Nenhuma observação registrada.'}</p></div>
+
+                  <div className="detail-action-bar">
+                    {hasPendingChanges && !isUpdatingStatus && <span className="pending-hint">Alterações não salvas</span>}
+                    <button
+                      type="button"
+                      className="detail-action"
+                      onClick={handleUpdateStatus}
+                      disabled={isUpdatingStatus || !hasPendingChanges}
+                    >
+                      <CheckCircle2 size={17} /> {isUpdatingStatus ? 'Confirmando...' : 'Confirmar alterações'}
+                    </button>
+                  </div>
                 </>;
               })() : <div className="empty-state detail-empty"><ClipboardList size={30} /><p>Selecione uma consulta</p><span>Os detalhes da classificação serão exibidos aqui.</span></div>}
             </aside>
@@ -1492,16 +1599,18 @@ export default function App() {
             )}
             {isFinalizingTriage && <div className="ai-notice"><RefreshCw className="spin" size={16} /><p>Consolidando a triagem e registrando a consulta...</p></div>}
             <form onSubmit={handleSendMessage} className="chat-input-bar">
-              <input
-                type="text"
-                placeholder="Descreva o que está sentindo..."
-                value={inputMsg}
-                onChange={(e) => setInputMsg(e.target.value)}
-                disabled={isFinalizingTriage || Boolean(triageResult) || clinicOptions.length > 0}
-              />
-              <button type="submit" className="send-button" disabled={!inputMsg.trim() || isFinalizingTriage || Boolean(triageResult) || clinicOptions.length > 0}>
-                <Send size={18} />
-              </button>
+              <div className="chat-input-inner">
+                <input
+                  type="text"
+                  placeholder="Descreva o que está sentindo..."
+                  value={inputMsg}
+                  onChange={(e) => setInputMsg(e.target.value)}
+                  disabled={isFinalizingTriage || Boolean(triageResult) || clinicOptions.length > 0}
+                />
+                <button type="submit" className="send-button" disabled={!inputMsg.trim() || isFinalizingTriage || Boolean(triageResult) || clinicOptions.length > 0}>
+                  <Send size={18} />
+                </button>
+              </div>
             </form>
           </section>
         </main>
